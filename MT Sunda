@@ -1,0 +1,140 @@
+-- ⚡ Auto Summit by Ganesha Exploit
+-- Teleport Loop + UI Modern
+-- Delay teleport 0.001 detik
+-- Notifikasi asli Roblox
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local StarterGui = game:GetService("StarterGui")
+local UIS = game:GetService("UserInputService")
+
+-- Daftar koordinat target
+local COORDS = {
+    Vector3.new(-93.45, 14.41, 20.02),
+    Vector3.new(-684.14, 15.41, 633.19),
+    Vector3.new(-342.79, 183.41, 658.41),
+    Vector3.new(22.92, 171.99, 894.17),
+    Vector3.new(639.58, 180.52, 920.45),
+    Vector3.new(605.64, 45.54, 782.98),
+    Vector3.new(766.53, 173.93, 619.53),
+    Vector3.new(747.05, 147.38, 514.15),
+    Vector3.new(529.22, 111.41, 476.17),
+    Vector3.new(10.47, 315.41, 486.55),
+    Vector3.new(-3.60, 155.41, 303.23),
+    Vector3.new(368.78, 231.41, 167.65),
+    Vector3.new(563.74, 523.38, 49.04),
+    Vector3.new(-83.00, 14.41, 16.74),
+}
+
+-- Toggle
+local running = false
+
+-- Fungsi Notifikasi Roblox Style
+local function Notify(msg, dur)
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = "⚡ Auto Summit by Ganesha Exploit",
+            Text = msg,
+            Duration = dur or 2
+        })
+    end)
+end
+
+-- Teleport super cepat
+local function BrutalTeleport(pos)
+    hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+    task.wait(0.001) -- ✅ delay teleport jadi 0.001 detik
+end
+
+-- Loop teleport (auto ulang terus)
+local function StartTeleport()
+    running = true
+    while running do
+        for i, v in ipairs(COORDS) do
+            if not running then break end
+            BrutalTeleport(v)
+            Notify("Checkpoint "..i.." tercapai ✅", 1)
+        end
+        if running then
+            Notify("🔁 Mengulang dari awal...", 2)
+        end
+    end
+    Notify("⛔ Teleport dihentikan", 2)
+end
+
+--===== UI Modern Sederhana =====--
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "BrutalTeleportUI"
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 200, 0, 80)
+frame.Position = UDim2.new(0.05, 0, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 25)
+title.BackgroundTransparency = 1
+title.Text = "⚡ Brutal Teleport"
+title.TextColor3 = Color3.new(1,1,1)
+title.Font = Enum.Font.GothamBold
+title.TextScaled = true
+
+local button = Instance.new("TextButton", frame)
+button.Size = UDim2.new(0.9, 0, 0, 35)
+button.Position = UDim2.new(0.05, 0, 0.45, 0)
+button.BackgroundColor3 = Color3.fromRGB(50, 150, 250)
+button.Text = "▶ START"
+button.TextColor3 = Color3.new(1,1,1)
+button.Font = Enum.Font.GothamBold
+button.TextScaled = true
+Instance.new("UICorner", button).CornerRadius = UDim.new(0, 10)
+
+-- Dragging manual
+local dragging, dragInput, dragStart, startPos
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+frame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
+	end
+end)
+UIS.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		frame.Position = UDim2.new(
+			startPos.X.Scale, startPos.X.Offset + delta.X,
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+
+-- Tombol Toggle
+button.MouseButton1Click:Connect(function()
+    if not running then
+        button.Text = "⏸ STOP"
+        button.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+        task.spawn(StartTeleport)
+    else
+        running = false
+        button.Text = "▶ START"
+        button.BackgroundColor3 = Color3.fromRGB(50, 150, 250)
+    end
+end)
+
+-- Notifikasi awal
+Notify("Script Aktif ✅", 3)
