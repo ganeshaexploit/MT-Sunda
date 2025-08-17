@@ -1,14 +1,17 @@
 -- ⚡ Auto Summit by Ganesha Exploit
--- Teleport Loop + UI Modern
--- Delay teleport 0.30 detik
+-- Teleport Loop + UI Modern + Godmode
+-- Delay teleport 0.50 detik
+-- Auto lanjut jika respawn
 -- Notifikasi asli Roblox
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
 local StarterGui = game:GetService("StarterGui")
 local UIS = game:GetService("UserInputService")
+
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local humanoid = char:WaitForChild("Humanoid")
 
 -- Daftar koordinat target
 local COORDS = {
@@ -28,8 +31,9 @@ local COORDS = {
     Vector3.new(-83.00, 14.41, 16.74),
 }
 
--- Toggle
+-- Variabel utama
 local running = false
+local currentIndex = 1 -- checkpoint terakhir
 
 -- Fungsi Notifikasi Roblox Style
 local function Notify(msg, dur)
@@ -42,27 +46,56 @@ local function Notify(msg, dur)
     end)
 end
 
+-- Fungsi Godmode
+local function EnableGodmode(hum)
+    if not hum then return end
+    hum.Name = "GaneshaHumanoid"
+    hum.Health = hum.MaxHealth
+    hum.HealthChanged:Connect(function()
+        hum.Health = hum.MaxHealth -- tidak bisa berkurang
+    end)
+    Notify("🛡️ Godmode Aktif", 2)
+end
+EnableGodmode(humanoid)
+
 -- Teleport dengan delay
 local function BrutalTeleport(pos)
-    hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
-    task.wait(0.30) -- ✅ delay teleport jadi 0.30 detik
+    if hrp then
+        hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+    end
+    task.wait(0.50) -- ✅ delay teleport 0.50 detik
 end
 
--- Loop teleport (auto ulang terus)
+-- Loop teleport (lanjut dari checkpoint terakhir)
 local function StartTeleport()
     running = true
     while running do
-        for i, v in ipairs(COORDS) do
+        for i = currentIndex, #COORDS do
             if not running then break end
-            BrutalTeleport(v)
+            currentIndex = i
+            BrutalTeleport(COORDS[i])
             Notify("Checkpoint "..i.." tercapai ✅", 1)
         end
         if running then
             Notify("🔁 Mengulang dari awal...", 2)
+            currentIndex = 1
         end
     end
     Notify("⛔ Teleport dihentikan", 2)
 end
+
+-- Auto update HRP, Humanoid & lanjut saat respawn
+player.CharacterAdded:Connect(function(newChar)
+    char = newChar
+    hrp = newChar:WaitForChild("HumanoidRootPart")
+    humanoid = newChar:WaitForChild("Humanoid")
+    EnableGodmode(humanoid) -- aktif lagi kalau respawn
+    if running then
+        task.wait(1)
+        Notify("Respawn! Lanjut checkpoint "..currentIndex, 3)
+        task.spawn(StartTeleport)
+    end
+end)
 
 --===== UI Modern Sederhana =====--
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -94,7 +127,7 @@ button.Font = Enum.Font.GothamBold
 button.TextScaled = true
 Instance.new("UICorner", button).CornerRadius = UDim.new(0, 10)
 
--- Dragging manual
+-- Dragging UI
 local dragging, dragInput, dragStart, startPos
 frame.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
