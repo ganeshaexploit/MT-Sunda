@@ -1,6 +1,6 @@
 -- ⚡ Auto Summit by Ganesha Exploit
 -- Teleport Loop + UI Modern
--- Delay teleport 0.001 detik
+-- Delay teleport 0.30 detik
 -- Notifikasi asli Roblox
 
 local Players = game:GetService("Players")
@@ -42,10 +42,10 @@ local function Notify(msg, dur)
     end)
 end
 
--- Teleport super cepat
+-- Teleport dengan delay
 local function BrutalTeleport(pos)
     hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
-    task.wait(0.001) -- ✅ delay teleport jadi 0.001 detik
+    task.wait(0.30) -- ✅ delay teleport jadi 0.30 detik
 end
 
 -- Loop teleport (auto ulang terus)
