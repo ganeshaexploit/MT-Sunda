@@ -1,8 +1,9 @@
--- ⚡ Auto Summit by Ganesha Exploit
--- Teleport Loop + UI Modern + Godmode
--- Delay teleport 0.50 detik
--- Auto lanjut jika respawn
--- Notifikasi asli Roblox
+-- ⚡ Auto Summit by Ganesha Exploit (Safe Godmode Fix)
+-- ✅ Teleport Loop + UI Modern
+-- ✅ Delay teleport 0.50 detik
+-- ✅ Auto lanjut saat respawn
+-- ✅ Godmode aman (tidak bisa mati)
+-- ✅ Notifikasi asli Roblox
 
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
@@ -33,9 +34,10 @@ local COORDS = {
 
 -- Variabel utama
 local running = false
-local currentIndex = 1 -- checkpoint terakhir
+local currentIndex = 1
+local loopThread
 
--- Fungsi Notifikasi Roblox Style
+-- Fungsi Notifikasi Roblox
 local function Notify(msg, dur)
     pcall(function()
         StarterGui:SetCore("SendNotification", {
@@ -46,58 +48,73 @@ local function Notify(msg, dur)
     end)
 end
 
--- Fungsi Godmode
+-- Godmode aman (tanpa hapus humanoid)
 local function EnableGodmode(hum)
     if not hum then return end
-    hum.Name = "GaneshaHumanoid"
-    hum.Health = hum.MaxHealth
-    hum.HealthChanged:Connect(function()
-        hum.Health = hum.MaxHealth -- tidak bisa berkurang
+    -- Loop paksa darah penuh
+    task.spawn(function()
+        while hum and hum.Parent do
+            if hum.Health < hum.MaxHealth then
+                hum.Health = hum.MaxHealth
+            end
+            task.wait(0.2)
+        end
     end)
+
+    -- Auto respawn kalau bener2 mati
+    hum.Died:Connect(function()
+        task.wait(0.5)
+        player:LoadCharacter()
+    end)
+
     Notify("🛡️ Godmode Aktif", 2)
 end
 EnableGodmode(humanoid)
 
--- Teleport dengan delay
+-- Teleport dengan delay aman
 local function BrutalTeleport(pos)
-    if hrp then
+    if hrp and hrp.Parent then
         hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
     end
-    task.wait(0.50) -- ✅ delay teleport 0.50 detik
+    task.wait(0.50)
 end
 
--- Loop teleport (lanjut dari checkpoint terakhir)
+-- Loop teleport
 local function StartTeleport()
+    if loopThread then return end
     running = true
-    while running do
-        for i = currentIndex, #COORDS do
-            if not running then break end
-            currentIndex = i
-            BrutalTeleport(COORDS[i])
-            Notify("Checkpoint "..i.." tercapai ✅", 1)
+    loopThread = task.spawn(function()
+        while running do
+            for i = currentIndex, #COORDS do
+                if not running then break end
+                currentIndex = i
+                BrutalTeleport(COORDS[i])
+                Notify("Checkpoint "..i.." ✅", 1)
+            end
+            if running then
+                Notify("🔁 Ulang dari awal...", 2)
+                currentIndex = 1
+            end
         end
-        if running then
-            Notify("🔁 Mengulang dari awal...", 2)
-            currentIndex = 1
-        end
-    end
-    Notify("⛔ Teleport dihentikan", 2)
+        loopThread = nil
+        Notify("⛔ Teleport dihentikan", 2)
+    end)
 end
 
--- Auto update HRP, Humanoid & lanjut saat respawn
+-- Auto lanjut saat respawn
 player.CharacterAdded:Connect(function(newChar)
     char = newChar
     hrp = newChar:WaitForChild("HumanoidRootPart")
     humanoid = newChar:WaitForChild("Humanoid")
-    EnableGodmode(humanoid) -- aktif lagi kalau respawn
+    EnableGodmode(humanoid)
     if running then
         task.wait(1)
         Notify("Respawn! Lanjut checkpoint "..currentIndex, 3)
-        task.spawn(StartTeleport)
+        StartTeleport()
     end
 end)
 
---===== UI Modern Sederhana =====--
+--===== UI Modern =====--
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.Name = "BrutalTeleportUI"
 gui.ResetOnSpawn = false
@@ -161,7 +178,7 @@ button.MouseButton1Click:Connect(function()
     if not running then
         button.Text = "⏸ STOP"
         button.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-        task.spawn(StartTeleport)
+        StartTeleport()
     else
         running = false
         button.Text = "▶ START"
@@ -170,4 +187,4 @@ button.MouseButton1Click:Connect(function()
 end)
 
 -- Notifikasi awal
-Notify("Script Aktif ✅", 3)
+Notify("Script Aktif & Stabil ✅", 3)
